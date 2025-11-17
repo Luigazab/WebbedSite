@@ -11,3 +11,7 @@
     @apply cursor-pointer hover:scale-105;
   }
 }
+
+.blocklyFlyoutScrollbar {
+  display: none !important;
+}
