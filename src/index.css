@@ -8,7 +8,7 @@
     @apply font-extrabold text-lg bg-gray-50 text-slate-950 px-2 py-2 border-3 border-black rounded-2xl drop-shadow-[-2px_2px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:translate-x-1 hover:drop-shadow-[-4px_4px_0px_rgba(0,0,0,1)] hover:bg-white hover:scale-105 transition-transform cursor-pointer;
   }
   button{
-    @apply cursor-pointer hover:scale-105;
+    @apply cursor-pointer;
   }
 }
 

@@ -16,13 +16,15 @@ import Blocks from "./pages/Blocks";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Editor from "./pages/Editor";
+import Profile from "./pages/Profile";
 
 const App = () => {
   return <div>
     <Routes>
-      <Route index element={<Landing />} />
+      {/* <Route index element={<Landing />} /> */}
       <Route element={<PublicRoute><AuthLayout/></PublicRoute>}>
-        <Route path="login" element={<Login/>} />
+        <Route index element={<Login/>} />
+        {/* <Route path="login" element={<Login/>} /> */}
         <Route path="register" element={<Register/>} />
       </Route>
       <Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
@@ -31,6 +33,8 @@ const App = () => {
         <Route path="gallery" element={<Gallery />} />
         <Route path="blocks" element={<Blocks />} />
         <Route path="editor/:id?" element={<Editor/>}/>
+        <Route path="profile" element={<Profile/>}/>
+        <Route path="profile/:userId" element={<Profile/>}/>
       </Route>
     </Routes>
   </div>;

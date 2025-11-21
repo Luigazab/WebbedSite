@@ -1,10 +1,10 @@
-import { Eye, EyeOff, Edit, Trash2, Search, Plus, Blocks } from "lucide-react";
+import { Eye, EyeOff, Edit, Trash2, Search, Blocks } from "lucide-react";
 import { useEffect, useState } from "react";
 import Dropdown from "../components/Dropdown";
 import { supabase } from "../supabaseClient";
-import * as Blockly from 'blockly/core';
-import 'blockly/blocks';
+import ProjectModal from "../modals/ProjectModal";
 import { useNavigate } from "react-router";
+import { Divider } from "../components/Divider";
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -12,8 +12,12 @@ const Projects = () => {
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+
   const [filters, setFilters] = useState({ 
-    category: '', 
+    category: 'all', 
     order: 'newest_first', 
     sort: 'last_modified'
   });
@@ -48,7 +52,6 @@ const Projects = () => {
   const loadProjects = async () => {
     setLoading(true);
     try {
-      // Replace with actual Supabase call
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -169,6 +172,16 @@ const Projects = () => {
     }
   };
 
+  const openProjectModal = (project) => {
+    setSelectedProject(project);
+    setShowProjectModal(true);
+  }
+
+  const handleProjectModalClose = () => {
+    setShowProjectModal(false);
+    setSelectedProject(null);
+  }
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -183,23 +196,31 @@ const Projects = () => {
     return date.toLocaleDateString();
   };
 
-  return <div className="flex flex-col w-full h-full space-y-2 p-6">
-    <h1 className="font-bold text-4xl">Projects</h1>
+  return <div className="flex flex-col w-full h-full space-y-4 p-6">
+    <div>
+      <h1 className="font-bold text-4xl text-slate-900">Projects</h1>
+      <p className="text-gray-600 mt-1 text-xl font-medium">View all projects you have</p>
+    </div>
     {/* --------------Filter part--------------- */}
-    <div className="flex flex-wrap justify-between space-x-2">
-      <div className="flex flex-wrap space-x-2 gap-2 items-center">
-        <Dropdown name="category" value={filters.category} selectmessage="All Categories" options={filterOptions.categories} onChange={handleFilterChange} />
-        <Dropdown name="order" value={filters.order} selectmessage="Order" options={filterOptions.orders} onChange={handleFilterChange} />
-        <Dropdown name="sort" value={filters.sort} selectmessage="Sort By" options={filterOptions.sorts} onChange={handleFilterChange} />
-        <button onClick={clearFilters} className="font-semibold bg-gray-200 px-2 py-2 rounded-md ring-1">Clear Filter</button>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="md:flex-1 flex flex-wrap gap-2">
+        <Dropdown name="category" value={filters.category} allowEmpty={false} selectmessage="All Categories" options={filterOptions.categories} onChange={handleFilterChange} />
+        <Dropdown name="order" value={filters.order} selectmessage="Order" allowEmpty={false} options={filterOptions.orders} onChange={handleFilterChange} />
+        <Dropdown name="sort" value={filters.sort} selectmessage="Sort By" allowEmpty={false} options={filterOptions.sorts} onChange={handleFilterChange} />
+        <div className="flex justify-end">
+          <button type="button" onClick={clearFilters} className="font-medium bg-purple-700 px-3 py-2 rounded-xs border-3 border-black text-white drop-shadow-[4px_4px_0_rgba(0,0,0,1)] hover:drop-shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-purple-600 transition">Clear Filter</button>
+        </div>
       </div>
-      <label className="flex items-center gap-2 h-10 min-w-sm rounded-md border border-input bg-background px-3 py-2 text-base text-muted-foreground focus-within:ring-teal-800 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 md:text-sm">
-        <Search size={20}/>
-        <input type="text" value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value)}} placeholder="Search projects..." className="w-full bg-transparent outline-none placeholder:text-muted-foreground" />
-      </label>
+      <div className="flex-1 flex items-center gap-2">
+        <label className="flex-1 flex items-center gap-2 rounded-xs border-3 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] bg-white px-3 py-3 text-muted-foreground focus-within:ring-yellow-800 focus-within:ring-2 focus-within:ring-ring md:text-sm">
+          <Search size={20}/>
+          <input type="text" value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value)}} placeholder="Search projects..." className="w-full bg-transparent font-medium outline-none placeholder:text-gray-400" />
+        </label>
+        <button className="font-medium bg-purple-700 text-white px-3 py-2 rounded-sm border-3 border-black drop-shadow-[4px_4px_0_rgba(0,0,0,1)] hover:drop-shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-purple-600 transition">Search</button>
+      </div>
     </div>
     {/* -------------End of Filter Part----------- */}
-    <hr />
+    <Divider/>
     {/* -------------Project Cards---------------- */}
     {loading ? (
       <div className="flex items-center justify-center py-20">
@@ -208,19 +229,17 @@ const Projects = () => {
     ) : filteredProjects.length === 0 ? (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-gray-400 text-6xl mb-4"><Blocks/></div>
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">
+        <h3 className="text-xl font-bold text-gray-700 mb-2">
           {projects.length === 0 ? 'No projects yet' : 'No projects found'}
         </h3>
-        <p className="text-gray-500 mb-4">
+        <p className="font-medium text-gray-500 mb-4">
           {projects.length === 0 
             ? 'Create your first project to get started!' 
             : 'Try adjusting your filters or search query'}
         </p>
         {projects.length === 0 && (
-          <button 
-            onClick={() => window.location.href = '/editor'}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
-          >
+          <button onClick={() => navigate('/editor')}
+            className="px-6 py-3 bg-green-700 text-white rounded-sm border-2 border-black drop-shadow-[0_4px_0_rgba(0,0,0,1)] hover:drop-shadow-[0_2px_0_rgba(0,0,0,1)] hover:bg-green-600 transition font-semibold">
             Create New Project
           </button>
         )}
@@ -229,22 +248,20 @@ const Projects = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredProjects.map((project) => (
           <div key={project.id} 
-            className="border-2 rounded-xl bg-white hover:shadow-lg transition-shadow group">
+            className="border border-sky-700 rounded-sm bg-blue-200 hover:drop-shadow-[4px_4px_0_rgba(0,0,0,1)] transition-all group">
             {/* Preview */}
-            <div className="relative w-full h-40 flex items-center justify-center rounded-t-lg bg-linear-to-br from-blue-100 to-purple-400 overflow-hidden">
+            <div className="relative w-full h-40 flex items-center justify-center rounded-t-sm bg-linear-to-br from-blue-50 to-purple-50 overflow-hidden">
               {project.generated_html ? (
-                <iframe
-                  srcDoc={project.generated_html}
+                <iframe srcDoc={project.generated_html}
                   className="w-full h-full border-0 pointer-events-none scale-200 origin-top-left"
-                  title={`Preview of ${project.title}`}
-                  sandbox="allow-scripts"/>
+                  title={`Preview of ${project.title}`} sandbox="allow-scripts"/>
               ) : (
-                <div className="text-gray-400 font-semibold text-sm">No preview</div>
+                <div className="text-gray-400 text-sm">No preview</div>
               )}
               
               {/* Hover Actions */}
-              <div className="absolute inset-0 bg-black group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                <button onClick={() => navigate(`/editor/${project.id}`)}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                <button onClick={() => openProjectModal(project)}
                   className="p-2 bg-white rounded-full hover:bg-gray-100 transition"
                   title="Edit">
                   <Edit size={18} className="text-gray-700" />
@@ -260,23 +277,12 @@ const Projects = () => {
             {/* Info */}
             <div className="px-3 py-2 flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-sm truncate" title={project.title}>
-                  {project.title}
-                </h2>
-                <p className="text-gray-500 text-xs">
-                  Edited {formatDate(project.updated_at)}
-                </p>
-                {project.views_count > 0 && (
-                  <p className="text-gray-400 text-xs">
-                    {project.views_count} views · {project.likes_count} likes
-                  </p>
-                )}
+                <h2 className="font-medium text-lg text-slate-900 truncate" title={project.title}>{project.title}</h2>
+                <p className="text-slate-500 text-xs">Edited {formatDate(project.updated_at)}</p>
               </div>
-              <button
-                onClick={() => toggleVisibility(project.id, project.is_public)}
+              <button onClick={() => toggleVisibility(project.id, project.is_public)}
                 className="ml-2 p-1 hover:bg-gray-100 rounded transition"
-                title={project.is_public ? 'Make private' : 'Make public'}
-              >
+                title={project.is_public ? 'Make private' : 'Make public'}>
                 {project.is_public ? (
                   <Eye size={20} className="text-green-600" />
                 ) : (
@@ -291,11 +297,14 @@ const Projects = () => {
 
     {/* Results count */}
     {!loading && filteredProjects.length > 0 && (
-      <div className="text-sm text-gray-500 text-center py-2">
+      <div className="text-md font-semibold text-gray-500 text-center py-2">
         Showing {filteredProjects.length} of {projects.length} projects
       </div>
     )}
     {/* -----------End of Project Cards------------ */}
+    {selectedProject && (
+      <ProjectModal isOpen={showProjectModal} onClose={handleProjectModalClose} id={selectedProject.id} title={selectedProject.title} description={selectedProject.description || ''} likes={selectedProject.likes_count || 0} comments={selectedProject.comments_count || 0} srcDoc={selectedProject.generated_html} isPublic={selectedProject.is_public} projectOwnerId={selectedProject.user_id}/>
+    )}
   </div>;
 };
 

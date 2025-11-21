@@ -20,7 +20,7 @@ export const defineGenerators = () => {
 
   javascriptGenerator.forBlock['html_title'] = function(block) {
     const text = block.getFieldValue('TEXT');
-    return `<title>${text}<title/>\n`;
+    return `<title>${text}</title>\n`;
   };
 
   javascriptGenerator.forBlock['html_style'] = function(block, generator) {
