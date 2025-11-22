@@ -7,6 +7,8 @@ import { javascriptGenerator } from 'blockly/javascript';
 import { Download, FolderOpen, Save, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useParams } from 'react-router';
+import { toolboxConfig } from '../blocks/toolboxConfig';
+
 
 const Editor = () => {
   const { id } = useParams();
@@ -37,37 +39,8 @@ const Editor = () => {
   useEffect(() => {
     if (blocklyDiv.current && !workspace.current && isInitialized){
       workspace.current = Blockly.inject(blocklyDiv.current, {
-        toolbox: {
-          kind: 'categoryToolbox',
-          contents:[{
-            kind: 'category',
-            name: 'Structure',
-            colour:230,
-            contents:[
-              {kind: 'block', type: 'html_boilerplate'},
-              {kind: 'block', type: 'html_title'},
-              {kind: 'block', type: 'html_style'},
-            ]
-          },
-          {
-            kind: 'category',
-            name: 'Elements',
-            colour:160,
-            contents:[
-              {kind: 'block', type: 'html_element'},
-              {kind: 'block', type: 'html_text'},
-            ]
-          },
-          {
-            kind: 'category',
-            name: 'CSS',
-            colour:290,
-            contents:[
-              {kind: 'block', type: 'css_rule'},
-              {kind: 'block', type: 'css_property'},
-            ]
-          }]
-        },
+        toolbox: toolboxConfig,
+        theme: Blockly.Themes.Modern,
         zoom: {
           controls: true,
           wheel: true,
@@ -376,7 +349,7 @@ const Editor = () => {
         {message}
       </div>
     )}
-    <div className="flex flex-1 overflow-hidden bg-amber-100 rounded-2xl border-2">
+    <div className="flex flex-1 overflow-hidden bg-amber-100 rounded-sm border-2">
       <div ref={blocklyDiv} className="flex-1 z-0"/>
       <div id="outputPanel" className="w-2/5 flex flex-col border-l-4 border-gray-300 bg-white">
         <div id="controls" className="p-4 bg-gray-50 border-b border-gray-200 flex gap-3">

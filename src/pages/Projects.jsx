@@ -248,7 +248,7 @@ const Projects = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredProjects.map((project) => (
           <div key={project.id} 
-            className="border border-sky-700 rounded-sm bg-blue-200 hover:drop-shadow-[4px_4px_0_rgba(0,0,0,1)] transition-all group">
+            className="border-2 rounded-sm bg-sky-500 hover:drop-shadow-[4px_4px_0_rgba(0,0,0,1)] transition-all group">
             {/* Preview */}
             <div className="relative w-full h-40 flex items-center justify-center rounded-t-sm bg-linear-to-br from-blue-50 to-purple-50 overflow-hidden">
               {project.generated_html ? (
