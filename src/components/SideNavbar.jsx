@@ -170,7 +170,7 @@ const SideNavbar = () => {
 
         {showNotifications && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
+            <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)} />
             <div className="absolute left-full ml-4 top-0 z-20 w-80 bg-white rounded-lg shadow-2xl border border-grayr-200 max-h-96 overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h3 className="font-bold text-gray-900">Notifications</h3>
