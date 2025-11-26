@@ -4,11 +4,17 @@ import { defineBlocks } from '../blocks/defineBlocks';
 import { defineGenerators } from  '../blocks/defineGenerators';
 import { useEffect, useRef, useState } from 'react';
 import { javascriptGenerator } from 'blockly/javascript';
-import { Download, FolderOpen, Save, Trash2, Upload } from 'lucide-react';
+import { X, Menu, Play, Monitor, Laptop, Tablet, Smartphone, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useParams } from 'react-router';
 import { toolboxConfig } from '../blocks/toolboxConfig';
-
+import { registerToolboxLabel } from '../blocks/ToolBoxLabel';
+import { registerCustomCategory } from '../blocks/CustomCategory';
+import Theme from '@blockly/theme-modern';
+import { Divider } from '../components/Divider';
+import ModalDropdown from '../components/ModalDropdown';
+import SaveModal from '../modals/SaveModal';
+import LoadModal from '../modals/LoadModal';
 
 const Editor = () => {
   const { id } = useParams();
@@ -16,6 +22,7 @@ const Editor = () => {
 
   const blocklyDiv = useRef(null);
   const workspace = useRef(null);
+  const [toolboxVisible, setToolboxVisible] = useState(true);
   const [activeTab, setActiveTab] = useState('preview');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
@@ -26,6 +33,8 @@ const Editor = () => {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [projects, setProjects] = useState([]);
   const [message, setMessage] = useState('');
+  const [responsive, setResponsive] = useState(true);
+  const [selectedDevice, setSelectedDevice] = useState('desktop');
 
 
   useEffect(() => {
@@ -38,18 +47,31 @@ const Editor = () => {
 
   useEffect(() => {
     if (blocklyDiv.current && !workspace.current && isInitialized){
+      registerToolboxLabel();
+      registerCustomCategory();
       workspace.current = Blockly.inject(blocklyDiv.current, {
         toolbox: toolboxConfig,
-        theme: Blockly.Themes.Modern,
+        theme: Theme,
         zoom: {
           controls: true,
           wheel: true,
           startScale:1.0,
           maxScale: 3,
           minScale: 0.3,
-          scaleSpeed: 1.2
+          scaleSpeed: 1.2,
         },
-        trashcan: true
+        trashcan: true,
+        move: {
+          scrollbars: true,
+          drag: true,
+          wheel: true
+        },
+        grid: {
+          spacing: 20,       // distance between dots
+          length: 1,         // length of each dot
+          colour: '#2f4f4f',    // color of the dots
+          snap: true         // snap blocks to grid
+        }
       });
 
       runCode();
@@ -57,32 +79,9 @@ const Editor = () => {
       if (id) {
         loadProjectById(id);
       }
-      const ws = workspace.current;
-
-      // Hard auto-close: hide flyout when clicking outside toolbox
-      const onDocPointerDown = (e) => {
-        const toolboxEl = ws.getToolbox()?.getHtmlDiv?.();
-        const flyout = ws.getFlyout?.();
-
-        // If there's no toolbox or flyout, nothing to do
-        if (!toolboxEl || !flyout) return;
-
-        const clickedInsideToolbox = toolboxEl.contains(e.target);
-        if (!clickedInsideToolbox) {
-          // Prefer setVisibility if available; fallback to hide
-          if (typeof flyout.setVisibility === 'function') {
-            flyout.setVisibility(false);
-          } else if (typeof flyout.hide === 'function') {
-            flyout.hide();
-          }
-        }
-      };
-
-      document.addEventListener('pointerdown', onDocPointerDown);
-
+      
       // Cleanup
       return () => {
-        document.removeEventListener('pointerdown', onDocPointerDown);
         if (workspace.current) {
           workspace.current.dispose();
           workspace.current = null;
@@ -90,6 +89,35 @@ const Editor = () => {
       };
     }
   }, [isInitialized, id]);
+
+
+  const toggleToolbox = () => {
+    if (!workspace.current) return;
+
+    const newVisibility = !toolboxVisible;
+    setToolboxVisible(newVisibility);
+    
+    // Use Blockly's built-in method to toggle toolbox
+    const toolbox = workspace.current.getToolbox();
+    
+    if (toolbox) {
+      if (newVisibility) {
+        toolbox.setVisible(true);
+      } else {
+        toolbox.setVisible(false);
+        // Close flyout when hiding toolbox
+        workspace.current.getFlyout()?.setVisible(false);
+      }
+    }
+    
+    // Resize workspace to fill available space
+    setTimeout(() => {
+      if (workspace.current) {
+        Blockly.svgResize(workspace.current);
+      }
+    }, 100);
+  };
+
 
   const loadProjectById = async (projectId) => {
     try{
@@ -139,8 +167,8 @@ const Editor = () => {
   };
 
    // Save workspace state to memory (simulating Supabase)
-  const saveProject = async () => {
-    if (!projectTitle.trim()) {
+  const handleSave = async ({ title, description }) => {
+    if (!title.trim()) {
       showMessage('Please enter a project title', true);
       return;
     }
@@ -154,10 +182,11 @@ const Editor = () => {
       showMessage('Please log in to save', true);
       return;
     }
+
     const projectData = {
       user_id: user.id,
-      title: projectTitle,
-      description: projectDescription,
+      title,
+      description,
       blocks_json: workspaceState,
       generated_html: code,
       is_public: false,
@@ -183,12 +212,14 @@ const Editor = () => {
     } else {
       const savedProjectId = result.data[0].id
       setCurrentProjectId(savedProjectId);
+      setProjectTitle(title);
+      setProjectDescription(description);
       if(!currentProjectId) {
         navigate(`/editor/${savedProjectId}`, {replace: true});
       }
       setShowSaveModal(false);
-      showMessage(`Project "${projectTitle}" saved successfully!`);
-      loadUserProjects(); // Refresh list
+      showMessage(`Project "${title}" saved successfully!`);
+      loadUserProjects();
     }
   };
 
@@ -282,9 +313,11 @@ const Editor = () => {
     showMessage('HTML file downloaded!');
   };
 
+  const fileInputRef = useRef(null);
+
   // Import from file (Blockly JSON)
   const importFromFile = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -300,6 +333,9 @@ const Editor = () => {
       reader.readAsText(file);
     }
   };
+  const triggerImport = () => {
+    fileInputRef.current?.click();
+  }
 
   // Export workspace as JSON
   const exportWorkspace = () => {
@@ -313,160 +349,150 @@ const Editor = () => {
     URL.revokeObjectURL(url);
     showMessage('Workspace exported!');
   };
+  const deviceSizes = {
+    computer: { width: '100%', height: '80%', label: 'Desktop', icon: Monitor },
+    laptop: { width: '80%', height: '50%', label: 'Laptop', icon: Laptop },
+    tablet: { width: '768px', height: '1024px', label: 'Tablet', icon: Tablet },
+    phone: { width: '375px', height: '667px', label: 'Phone', icon: Smartphone }
+  };
 
-  return <div className="flex flex-col w-full h-full space-y-2 p-6 rounded-lg">
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
+  const toggleResponsiveView = () => {
+    setResponsive(!responsive);
+    if (responsive) {
+      setSelectedDevice('desktop');
+    }
+  };
+
+  const selectDevice = (device) => {
+    setSelectedDevice(device);
+    setResponsive(true);
+  };
+
+  return <div className="flex flex-col w-full h-full space-y-2 p-6 rounded-lg overflow-hidden">
+    <input ref={fileInputRef} type="file" accept=".json" onChange={importFromFile} style={{ display: 'none' }}/>
+    <div className="bg-white px-6 py-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-4xl text-left">WebbedSite <span className="text-green-700">Editor</span></h2>
+        <h2 className="flex-1 font-bold text-4xl text-left">WebbedSite <span className="text-green-700">Editor</span></h2>
         {currentProjectId && (
-          <p className="text-sm text-gray-600 mt-2">
-            Current: <span className='font-semibold'>{projectTitle}</span>
+          <p className="flex-1 flex text-md text-gray-400 mt-2 font-semibold justify-center">
+            Current: <span className='text-gray-600'>{projectTitle}</span>
           </p>
         )}
-        <div className="flex gap-2">
+        <div className="flex-1 flex gap-2 justify-end">
           <button onClick={createNewProject} 
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+            className="flex items-center px-2 py-2 bg-orange-600 text-white font-semibold text-md rounded-xs border-2 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] border-black hover:drop-shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-orange-700 transition">
             New Project
           </button>
-          <button onClick={() => setShowSaveModal(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-            <Save size={18}/>
-            Save Project
-          </button>
-          <button onClick={() => setShowLoadModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-            <FolderOpen size={18}/>
-            Load
-          </button>
-          <button onClick={exportToFile} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-            <Download size={18}/>
-            Export HTML
-          </button>
+          <ModalDropdown label={'Save'} onClick={() => setShowSaveModal(true)} action={'Save to Projects'} description={'Saves online to your account'} onClick2={exportWorkspace} action2={'Export as JSON'} description2={'Saves project to your device that you can load back for next time'} onClick3={exportToFile} action3={'Export as File'} description3={'Save locally as an HTML and CSS file'} color={'green'}/>
+          <ModalDropdown label={'Load'} onClick={() => setShowLoadModal(true)} action={'Load from Projects'} description={'Retrieves saved projects from your account'} onClick2={triggerImport} action2={'Import'} description2={'Retrieve saved project locally'} color={'blue'}/>
         </div>
       </div>
-      
     </div>
+    <Divider/>
     {message && (
       <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg">
         {message}
       </div>
     )}
-    <div className="flex flex-1 overflow-hidden bg-amber-100 rounded-sm border-2">
-      <div ref={blocklyDiv} className="flex-1 z-0"/>
-      <div id="outputPanel" className="w-2/5 flex flex-col border-l-4 border-gray-300 bg-white">
-        <div id="controls" className="p-4 bg-gray-50 border-b border-gray-200 flex gap-3">
-          <button onClick={runCode} className="px-5 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium">Run Code</button>
-          <button onClick={() => {runCode(); setActiveTab('code');}} className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">View Source Code</button>
-        </div>
-        <div className="flex px-4 bg-gray-50 border-b border-gray-200">
-          <button onClick={() => setActiveTab('preview')}className={`px-5 py-2 font-medium border-b-4 ${
-              activeTab === 'preview'
-                ? 'border-green-500 text-green-500'
-                : 'border-transparent text-gray-600'
-              }`}>Preview
+    <div className="flex flex-1 overflow-hidden gap-3 px-1 py-1">
+      <div className="flex flex-1 overflow-hidden rounded-sm border-2 relative drop-shadow-[4px_4px_0_rgba(0,0,0,1)] bg-white">
+        <button onClick={toggleToolbox} className="absolute top-1 left-1 z-50 bg-blue-800 text-white p-2 rounded-sm hover:bg-sky-800 transition-all" title={toolboxVisible ? "Hide Toolbox" : "Show Toolbox"}>
+          {toolboxVisible ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <div ref={blocklyDiv} className="flex-1 z-0"/>
+      </div>
+      <div className='w-3/10 relative'>
+        <h4 className="absolute left-2 font-extrabold z-1 text-4xl font-mono [text-shadow:2px_2px_0_white,-2px_-2px_0_white,2px_-2px_0_white,-2px_2px_0_white] px-2">Preview</h4>
+        <div id="outputPanel" className="flex-1 my-6 h-[95%] flex flex-col border-2 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] bg-white relative">
+          <button onClick={runCode} className="absolute -top-6 left-45 px-2 py-2 bg-green-500 border-3 border-black text-black hover:bg-green-60 rounded-full hover:bg-green-600 hover:-translate-y-1 font-medium transition-all">
+            <Play className='hover:stroke-white hover:fill-black transition-all' fill='white'/>
           </button>
-            <button onClick={() => setActiveTab('code')}className={`px-5 py-2 font-medium border-b-4 ${
+          <div className="flex justify-around px-4 pt-8 bg-gray-900 border-b border-gray-200 group transition-all">
+            <button onClick={() => setActiveTab('preview')}className={`px-5 py-2 font-bold border-b-4 ${
+                activeTab === 'preview'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-600'
+                }`}>Output
+            </button>
+            <button onClick={() => {setActiveTab('code'); runCode()}}className={`px-5 py-2 font-bold border-b-4 ${
               activeTab === 'code'
-                ? 'border-green-500 text-green-500'
+                ? 'border-green-500 text-green-600'
                 : 'border-transparent text-gray-600'
               }`}>Code
             </button>
-        </div>
-        <div className="flex-1 overflow-auto">
-          {activeTab === 'preview' ? (
-            <iframe srcDoc={generatedCode} className="w-full h-full border-0" title="preview" sandbox="allow-scripts"/>
-          ) : (
-            <pre className="p-4 bg-gray-900 text-green-400 text-sm h-full overflow-auto font-mono">{generatedCode}</pre>
-          )}
+          </div>
+          <div className="flex-1 overflow-auto">
+            {activeTab === 'preview' ? (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                {responsive && selectedDevice !== 'desktop' ? (
+                  <div className="bg-white border-4 border-gray-800 shadow-2xl transition-all duration-300 overflow-hidden"
+                    style={{ width: deviceSizes[selectedDevice].width,
+                      height: deviceSizes[selectedDevice].height,
+                      maxWidth: '100%',
+                      maxHeight: '100%'
+                    }} >
+                    <iframe 
+                      srcDoc={generatedCode} 
+                      className="w-full h-full border-0" 
+                      title="preview" 
+                      sandbox="allow-scripts"
+                    />
+                  </div>
+                ) : (
+                  <iframe 
+                    srcDoc={generatedCode} 
+                    className="w-full h-full border-0" 
+                    title="preview" 
+                    sandbox="allow-scripts"
+                  />
+                )}
+              </div>
+            ) : (
+              <pre className="p-4 bg-gray-900 text-green-400 text-sm h-full overflow-auto font-mono">{generatedCode}</pre>
+            )}
+          </div>
+          <div className='p-1 border-t-2 bg-slate-300'>
+            <div className='flex justify-between items-center mb-2'>
+              <h5 className='font-semibold'>Screen Sizes:</h5>
+              <button 
+                onClick={toggleResponsiveView} className='flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-gray-900 cursor-pointer transition-colors'>
+                {responsive ? (
+                  <>
+                    <Eye size={16} />
+                    Device View
+                  </>
+                ) : (
+                  <>
+                    <EyeOff size={16} />
+                    Full View
+                  </>
+                )}
+              </button>
+            </div>
+            <div className='grid grid-cols-2 lg:grid-cols-4 gap-1 m-1'>
+              {Object.entries(deviceSizes).map(([key, device]) => {
+                const IconComponent = device.icon;
+                const isSelected = responsive && selectedDevice === key;
+                return (
+                  <button key={key} onClick={() => selectDevice(key)}
+                    className={`border-2 border-black flex flex-col items-center rounded-sm hover:drop-shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-2 hover:-translate-x-1 px-2 py-3 transition-all ${
+                      isSelected 
+                        ? 'bg-green-500 text-white drop-shadow-[4px_4px_0_rgba(0,0,0,1)] -translate-y-1 -translate-x-1' 
+                        : 'bg-white '
+                    }`}>
+                    <IconComponent size={24} />
+                    <span className="text-xs mt-1">{device.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    {showSaveModal && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
-          <h3 className="text-2xl font-bold mb-4">Save Project</h3>
-          <input
-            type="text"
-            placeholder="Project Title"
-            value={projectTitle}
-            onChange={(e) => setProjectTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <textarea
-            placeholder="Description (optional)"
-            value={projectDescription}
-            onChange={(e) => setProjectDescription(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 h-24 resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <div className="flex gap-3">
-            <button
-              onClick={saveProject}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setShowSaveModal(false)}
-              className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Load Modal */}
-    {showLoadModal && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[80vh] overflow-auto">
-          <h3 className="text-2xl font-bold mb-4">Load Project</h3>
-          {projects.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No saved projects yet</p>
-          ) : (
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{project.title}</h4>
-                      {project.description && (
-                        <p className="text-sm text-gray-600 mt-1">{project.description}</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(project.updated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => loadProject(project)}
-                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                      >
-                        <Upload size={18} />
-                      </button>
-                      <button
-                        onClick={() => deleteProject(project.id)}
-                        className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <button
-            onClick={() => setShowLoadModal(false)}
-            className="w-full mt-4 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    )}
+    <SaveModal isOpen={showSaveModal} onClose={() => setShowSaveModal(false)} onSave={handleSave} initialTitle={projectTitle} initialDescription={projectDescription} />
+    <LoadModal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)} projects={projects} onLoadProject={loadProject} onDeleteProject={deleteProject} />
   </div>;
 };
 

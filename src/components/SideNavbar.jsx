@@ -138,7 +138,7 @@ const SideNavbar = () => {
       default: return <Bell className="text-yellow-500" fill="currentColor"/>
     }
   }
-  return <div className="max-w-25 min-w-25 bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
+  return <div className="max-w-25 min-w-25 h-screen bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
     <div className="flex flex-col items-center mt-8">
       <Atom className="size-10 mb-8" />
       <nav className="flex flex-col font-bold font-mono text-base-content space-y-8 items-center rounded-4xl ">

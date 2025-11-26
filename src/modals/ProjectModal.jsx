@@ -283,10 +283,7 @@ export default function ProjectModal({ isOpen, onClose, title, description, like
               <p className="text-gray-600 text-sm leading-relaxed bg-gray-200 p-4 rounded-2xl">{description || 'No description provided'}</p>
             </div>
             {isOwner && (
-            <div className="flex gap-3 items-center">
-              <button onClick={() => { navigate(`/editor/${id}`)}} className="flex items-center gap-2 bg-blue-600 text-white font-medium px-5 py-2.5 rounded-full hover:bg-blue-700 transition"><Edit size={16}/> Edit</button>
-              <button className="flex items-center gap-2 bg-orange-500 text-white font-medium px-5 py-2.5 rounded-full hover:bg-orange-600 transition"><Send size={16}/> Post in Gallery</button>
-            </div>
+            <button onClick={() => { navigate(`/editor/${id}`)}} className="flex items-center justify-center gap-2 bg-blue-600 text-white font-medium w-full py-2 rounded-full hover:bg-blue-700 transition"><Edit size={16}/> Edit</button>
             )}
           </div>
           <hr className="my-4"/>

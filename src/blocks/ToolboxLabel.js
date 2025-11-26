@@ -1,3 +1,4 @@
+import * as Blockly from 'blockly';
 class ToolboxLabel extends Blockly.ToolboxItem {
   constructor(toolboxItemDef, parentToolbox){
     super(toolboxItemDef, parentToolbox);
@@ -19,8 +20,10 @@ class ToolboxLabel extends Blockly.ToolboxItem {
   }
 }
 
-Blockly.registry.register(
-  Blockly.registry.Type.TOOLBOX_ITEM,
-  'toolboxlabel',
-  ToolboxLabel
-);
+export const registerToolboxLabel = () => {
+  Blockly.registry.register(
+    Blockly.registry.Type.TOOLBOX_ITEM,
+    'toolboxlabel',
+    ToolboxLabel
+  );
+};

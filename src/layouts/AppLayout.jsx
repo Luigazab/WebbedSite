@@ -30,8 +30,10 @@ const AppLayout = () => {
       {/* <div className="absolute inset-0 bg-gradient-to-b from-white via-white/0 to-white dark:from-gray-950 dark:via-gray-950/0 dark:to-gray-950" /></div> */}
       <div className="absolute inset-0 bg-linear-to-b from-white via-white/0 to-white" /></div>
         <div className="relative h-screen flex min-w-screen">
-          <SideNavbar/>
-          <div className="flex-1 flex items-center justfy-center">
+          <div className="fixed left-0 top-0 h-screen w-25 bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
+            <SideNavbar/>
+          </div>
+          <div className="flex-1 ml-25 flex items-center justfy-center">
             <Outlet/>
           </div>
         </div>

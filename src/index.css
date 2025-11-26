@@ -10,34 +10,45 @@
   button{
     @apply cursor-pointer;
   }
+  .blocklyTreeRowContentContainer{
+    @apply flex flex-col items-center;
+  }
+  .blocklyToolboxCategoryLabel{
+    @apply font-extrabold!
+  }
+  .blocklyToolbox {
+    @apply flex absolute top-10 left-4! p-0! border-2 border-black drop-shadow-[4px_4px_0_rgba(0,0,0,1)]
+  }
+  .blocklyTreeSeparator{
+    @apply border-t-3  border-black! rounded-full p-0!
+  }
+  .blocklyToolboxCategory{
+    @apply px-3! py-2 my-2 rounded-sm hover:drop-shadow-[0_3px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all border-2! 
+  }
+  .htmlCategory{
+    @apply  py-2 bg-[#f16529] hover:bg-[#f16529]! border-2! border-black! min-w-[170px]! my-2 hover:drop-shadow-[0_3px_0_black] hover:-translate-y-1 transition-all rounded-sm
+  }
+  .cssCategory{
+    @apply  py-2 bg-[#29a8e0] hover:bg-[#29a8e0]! border-2! border-black! min-w-[170px]! my-2 hover:drop-shadow-[0_3px_0_black] hover:-translate-y-1 transition-all rounded-sm
+  }
+  .blocklyToolboxCategoryGroup{
+    @apply  text-center px-2 bg-yellow-500!;
+  }
+  .customLabel{
+    @apply font-bold text-center
+  }
+  .blocklyFlyout{
+    @apply flex absolute top-5 left-5! p-0! border-2 bg-slate-800 border-black drop-shadow-[4px_4px_0_rgba(0,0,0,1)] h-[95%]
+  }
+  
 }
 
 .blocklyFlyoutScrollbar {
   display: none !important;
 }
 .blocklyToolbox{
-  /* background: orange; */
-  margin: 0px;
-  padding:8px;
-}
-.blocklyTreeSeparator{
-  background: color;
-  color: black;
-  border: 1px solid;
-}
-.blocklyToolboxContents {
-  padding: 0.5em;
-}
-.blocklyToolboxCategory {
-  padding: 3px;
-  margin-bottom: 0.5em;
-  border-radius: 4px;
-}
-
-.blocklyTreeRowContentContainer{
-  display: flex;
-  flex-direction: column;
-  align-items:center;
+  max-height: 90% !important;
+  height:fit-content !important;
 }
 .blocklyToolboxCategory {
   height: initial;
