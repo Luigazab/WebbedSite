@@ -17,18 +17,25 @@ import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Editor from "./pages/Editor";
 import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
+
+import AdminLayout from "./layouts/AdminLayout";
+import Overview from "./pages/admin/Overview";
+import Users from "./pages/admin/Users";
+import ProjectsManage from "./pages/admin/ProjectsManage";
+import TutorialsManage from "./pages/admin/TutorialsManage";
+import BadgesManage from "./pages/admin/BadgesManage";
 
 const App = () => {
   return <div>
     <Routes>
       {/* <Route index element={<Landing />} /> */}
       <Route element={<PublicRoute><AuthLayout/></PublicRoute>}>
-        <Route index element={<Login/>} />
-        {/* <Route path="login" element={<Login/>} /> */}
+        <Route path="login" element={<Login/>} />
         <Route path="register" element={<Register/>} />
       </Route>
       <Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
-        <Route path="home" element={<Home />} />
+        <Route index element={<Home />} />
         <Route path="projects" element={<Projects />} />
         <Route path="gallery" element={<Gallery />} />
         <Route path="blocks" element={<Blocks />} />
@@ -36,6 +43,14 @@ const App = () => {
         <Route path="profile" element={<Profile/>}/>
         <Route path="profile/:userId" element={<Profile/>}/>
       </Route>
+      <Route element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+        <Route path="overview" element={<Overview/>} />
+        <Route path="users" element={<Users/>} />
+        <Route path="projects-manage" element={<ProjectsManage/>} />
+        <Route path="tutorials-manage" element={<TutorialsManage/>} />
+        <Route path="badges-manage" element={<BadgesManage/>} />
+      </Route>
+      <Route path="*" element={<NotFound/>}/>
     </Routes>
   </div>;
 };

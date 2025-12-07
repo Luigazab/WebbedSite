@@ -138,11 +138,11 @@ const SideNavbar = () => {
       default: return <Bell className="text-yellow-500" fill="currentColor"/>
     }
   }
-  return <div className="max-w-25 min-w-25 h-screen bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
+  return <div className="max-w-25 min-w-25 z-50 h-screen bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
     <div className="flex flex-col items-center mt-8">
       <Atom className="size-10 mb-8" />
       <nav className="flex flex-col font-bold font-mono text-base-content space-y-8 items-center rounded-4xl ">
-        <NavLink to="/home">
+        <NavLink to="/">
           <button className="hover:font-semibold">Home</button>
         </NavLink>
         <NavLink to="/projects" >
@@ -171,7 +171,7 @@ const SideNavbar = () => {
         {showNotifications && (
           <>
             <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)} />
-            <div className="absolute left-full ml-4 top-0 z-20 w-80 bg-white rounded-lg shadow-2xl border border-grayr-200 max-h-96 overflow-hidden flex flex-col">
+            <div className="absolute left-full ml-4 top-0 z-50 w-80 bg-white rounded-lg shadow-2xl border border-grayr-200 max-h-96 overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h3 className="font-bold text-gray-900">Notifications</h3>
                 {unreadCount > 0 && (

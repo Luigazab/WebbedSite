@@ -4,9 +4,9 @@
   /* * {
     @apply transition-all duration-300 ease-in-out;
   } */
-  a.active {
+  /* a.active {
     @apply font-extrabold text-lg bg-gray-50 text-slate-950 px-2 py-2 border-3 border-black rounded-2xl drop-shadow-[-2px_2px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:translate-x-1 hover:drop-shadow-[-4px_4px_0px_rgba(0,0,0,1)] hover:bg-white hover:scale-105 transition-transform cursor-pointer;
-  }
+  } */
   button{
     @apply cursor-pointer;
   }
@@ -32,7 +32,7 @@
     @apply  py-2 bg-[#29a8e0] hover:bg-[#29a8e0]! border-2! border-black! min-w-[170px]! my-2 hover:drop-shadow-[0_3px_0_black] hover:-translate-y-1 transition-all rounded-sm
   }
   .blocklyToolboxCategoryGroup{
-    @apply  text-center px-2 bg-yellow-500!;
+    @apply  text-center px-2 bg-sky-200!;
   }
   .customLabel{
     @apply font-bold text-center
@@ -40,7 +40,12 @@
   .blocklyFlyout{
     @apply flex absolute top-5 left-5! p-0! border-2 bg-slate-800 border-black drop-shadow-[4px_4px_0_rgba(0,0,0,1)] h-[95%]
   }
-  
+  .adminButton{
+    @apply text-gray-700 hover:bg-gray-50
+  }
+  a.adminButton.active {
+    @apply bg-blue-50 text-blue-600
+  }
 }
 
 .blocklyFlyoutScrollbar {
@@ -50,6 +55,30 @@
   max-height: 90% !important;
   height:fit-content !important;
 }
+.blocklyToolboxScrollbar {
+  fill:#b370ff;
+}
 .blocklyToolboxCategory {
   height: initial;
+}
+.blocklyScrollbarHandle {
+  fill: #b370ff; /* Tailwind's orange-700 */
+}
+.blocklyDiv {
+  scrollbar-width: thin;
+  scrollbar-color: #4a90e2 #1a1a1a;
+}
+
+.blocklyDiv::-webkit-scrollbar {
+  width: 12px;
+}
+
+.blocklyDiv::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.blocklyDiv::-webkit-scrollbar-thumb {
+  background-color: #4a90e2;
+  border-radius: 10px;
+  border: 3px solid #1a1a1a;
 }

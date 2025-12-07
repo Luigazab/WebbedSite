@@ -38,11 +38,27 @@ const Login = () => {
         setAlert({type: 'error', message: error.message});
       }else{
         setAlert({ type: 'success', message: 'Successfully signed in!'});
-        setTimeout(() =>{
-          navigate('/home');
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        }
+        setTimeout(() => {
+          // Redirect based on role
+          if (profile?.role === 'admin') {
+            navigate('/admin/overview');
+          } else {
+            navigate('/');
+          }
         }, 1000);
       }
     }catch (error) {
+      console.error('Login error:', error);
       setAlert({type: 'error', message: 'An unexpected error occurred'});
     }finally{
       setLoading(false);
@@ -53,6 +69,12 @@ const Login = () => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !loading) {
+      handleSubmit();
+    }
+  };
+
   return (
     <>
     <div className="space-y-4">
@@ -61,14 +83,14 @@ const Login = () => {
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={loading} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100" placeholder="email@example.com" />
+          <input type="email" name="email" value={formData.email} onKeyPress={handleKeyPress} onChange={handleChange} disabled={loading} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100" placeholder="email@example.com" />
         </div>
        </div>
        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} disabled={loading} className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100" placeholder="••••••••"/>
+            <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onKeyPress={handleKeyPress} onChange={handleChange} disabled={loading} className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:bg-gray-100" placeholder="••••••••"/>
             <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={loading} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>

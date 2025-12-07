@@ -399,7 +399,7 @@ const Editor = () => {
         <button onClick={toggleToolbox} className="absolute top-1 left-1 z-50 bg-blue-800 text-white p-2 rounded-sm hover:bg-sky-800 transition-all" title={toolboxVisible ? "Hide Toolbox" : "Show Toolbox"}>
           {toolboxVisible ? <X size={20} /> : <Menu size={20} />}
         </button>
-        <div ref={blocklyDiv} className="flex-1 z-0"/>
+        <div ref={blocklyDiv} className="blocklyDiv flex-1 z-0"/>
       </div>
       <div className='w-3/10 relative'>
         <h4 className="absolute left-2 font-extrabold z-1 text-4xl font-mono [text-shadow:2px_2px_0_white,-2px_-2px_0_white,2px_-2px_0_white,-2px_2px_0_white] px-2">Preview</h4>

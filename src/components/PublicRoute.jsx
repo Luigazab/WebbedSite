@@ -5,23 +5,53 @@ import { supabase } from "../supabaseClient";
 const PublicRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    checkAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) {
+        fetchUserRole(session.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
+
+    if (session) {
+      await fetchUserRole(session.user.id);
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserRole = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setUserRole(data?.role || 'user');
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setUserRole('user');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -31,9 +61,12 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // If user is already logged in, redirect to home
+  // If user is already logged in, redirect based on role
   if (session) {
-    return <Navigate to="/home" replace />;
+    if (userRole === 'admin') {
+      return <Navigate to="/overview" replace />;
+    }
+    return <Navigate to="/" replace />;
   }
 
   return children;
