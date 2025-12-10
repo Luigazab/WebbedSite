@@ -23,7 +23,7 @@ export const defineBlocks = () => {
       this.appendDummyInput().appendField("title").appendField(new Blockly.FieldTextInput("My Page"), "TEXT");
       this.setPreviousStatement(true, "head_element");
       this.setNextStatement(true,"head_element");
-      this.setColour(230);
+      this.setColour("#8B5CF6");
       this.setTooltip("Page title shown in browser tab");
     }
   };

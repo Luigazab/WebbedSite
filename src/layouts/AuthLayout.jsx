@@ -11,7 +11,7 @@ const AuthLayout = () => {
         <div></div>
       </div>
     </div>
-    <TopNavbar/>
+    {/* <TopNavbar/> */}
     <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4">
       <div className="max-w-md">
         <div className="px-6 py-3 bg-white border-4 border-black rounded-lg drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] font-bold text-black hover:translate-x-1 hover:translate-y-1 hover:drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-transform">

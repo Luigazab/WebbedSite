@@ -27,7 +27,9 @@ export const toolboxConfig = {
           name: 'Document',
           colour: '#5C81A6',
           contents: [
-            { kind: 'block', type: 'html_boilerplate' }
+            { kind: 'block', type: 'html_boilerplate' },
+            { kind: 'block', type: 'html_head' },
+            { kind: 'block', type: 'html_body' },
           ]
         },
         {

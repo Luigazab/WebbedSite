@@ -25,6 +25,8 @@ import Users from "./pages/admin/Users";
 import ProjectsManage from "./pages/admin/ProjectsManage";
 import TutorialsManage from "./pages/admin/TutorialsManage";
 import BadgesManage from "./pages/admin/BadgesManage";
+import BlocksManage from "./pages/admin/BlocksManage";
+import Playground from "./pages/Playground";
 
 const App = () => {
   return <div>
@@ -49,8 +51,10 @@ const App = () => {
         <Route path="projects-manage" element={<ProjectsManage/>} />
         <Route path="tutorials-manage" element={<TutorialsManage/>} />
         <Route path="badges-manage" element={<BadgesManage/>} />
+        <Route path="blocks-manage" element={<BlocksManage/>} />
       </Route>
       <Route path="*" element={<NotFound/>}/>
+      <Route path="playground" element={<Playground/>}/>
     </Routes>
   </div>;
 };

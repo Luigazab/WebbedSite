@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@blockly/field-colour": "^6.0.6",
     "@blockly/theme-modern": "^7.0.2",
     "@supabase/supabase-js": "^2.80.0",
     "@tailwindcss/vite": "^4.1.16",

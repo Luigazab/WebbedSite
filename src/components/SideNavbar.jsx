@@ -1,4 +1,4 @@
-import { Atom, Bell, Heart, MessageCircleMore, User } from "lucide-react";
+import { Bell, Heart, MessageCircleMore, User } from "lucide-react";
 import { NavLink, useNavigate} from "react-router";
 import { supabase } from "../supabaseClient";
 import { useEffect, useState } from "react";
@@ -138,20 +138,20 @@ const SideNavbar = () => {
       default: return <Bell className="text-yellow-500" fill="currentColor"/>
     }
   }
-  return <div className="max-w-25 min-w-25 z-50 h-screen bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
-    <div className="flex flex-col items-center mt-8">
-      <Atom className="size-10 mb-8" />
+  return <div className="max-w-25 min-w-25 z-50 h-screen bg-gray-300 border-r-4 border-gray-900 flex flex-col items-center justify-between">
+    <div className="flex flex-col mt-8 w-full items-center">
+      <img src="/logo.png" alt="" className="size-20 mb-8" />
       <nav className="flex flex-col font-bold font-mono text-base-content space-y-8 items-center rounded-4xl ">
-        <NavLink to="/">
+        <NavLink to="/" className="navButtons">
           <button className="hover:font-semibold">Home</button>
         </NavLink>
-        <NavLink to="/projects" >
-          <button className="hover:font-semibold text-sm px-1">Projects</button>
+        <NavLink to="/projects" className="navButtons">
+          <button className="hover:font-semibold">Projects</button>
         </NavLink>
-        <NavLink to="/gallery">
+        <NavLink to="/gallery" className="navButtons">
           <button className="hover:font-semibold">Gallery</button>
         </NavLink>
-        <NavLink to="/blocks">
+        <NavLink to="/blocks" className="navButtons">
           <button className="hover:font-semibold">Blocks</button>
         </NavLink>
       </nav>

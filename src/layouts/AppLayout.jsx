@@ -7,7 +7,7 @@ const AppLayout = () => {
     <div>
       {/* <div className="absolute inset-0 bg-white dark:bg-gray-950 overflow-hidden"> */}
       <div className="absolute inset-0 bg-white overflow-hidden">
-      <svg    className="absolute inset-0 w-full h-full opacity-30 dark:opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none"  >
+      <svg className="absolute inset-0 w-full h-full opacity-30 dark:opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none"  >
         <path fill="none" stroke="url(#gradient1)" strokeWidth="0.5" d="M0,50 C20,60 40,40 60,50 C80,60 100,40 100,50 L100,100 L0,100 Z"/>
         <path fill="none" stroke="url(#gradient2)" strokeWidth="0.5" d="M0,60 C30,70 70,30 100,60 L100,100 L0,100 Z" />
         <path fill="none" stroke="url(#gradient3)" strokeWidth="0.5"
@@ -28,9 +28,9 @@ const AppLayout = () => {
         </defs>
       </svg>
       {/* <div className="absolute inset-0 bg-gradient-to-b from-white via-white/0 to-white dark:from-gray-950 dark:via-gray-950/0 dark:to-gray-950" /></div> */}
-      <div className="absolute inset-0 bg-linear-to-b from-white via-white/0 to-white" /></div>
+      <div className="absolute inset-0 bg-linear-to-b from-white via-white/0 to-slate-50" /></div>
         <div className="relative h-screen flex min-w-screen">
-          <div className="fixed left-0 top-0 h-screen w-25 bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
+          <div className="fixed left-0 top-0 h-screen w-25 z-50 bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
             <SideNavbar/>
           </div>
           <div className="flex-1 ml-25 flex items-center justfy-center">
