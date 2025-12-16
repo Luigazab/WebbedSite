@@ -27,6 +27,9 @@ import TutorialsManage from "./pages/admin/TutorialsManage";
 import BadgesManage from "./pages/admin/BadgesManage";
 import BlocksManage from "./pages/admin/BlocksManage";
 import Playground from "./pages/Playground";
+import Tutorial from "./pages/Tutorial";
+import UserDetail from "./pages/admin/UserDetail";
+import GuestLayout from "./layouts/GuestLayout";
 
 const App = () => {
   return <div>
@@ -36,18 +39,25 @@ const App = () => {
         <Route path="login" element={<Login/>} />
         <Route path="register" element={<Register/>} />
       </Route>
+      <Route path="guest/" element={<GuestLayout/>}>
+        <Route path="editor" element={<Editor/>} />
+        <Route path="blocks" element={<Blocks/>} />
+        <Route path="gallery" element={<Gallery/>} />
+      </Route>
       <Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
         <Route index element={<Home />} />
         <Route path="projects" element={<Projects />} />
         <Route path="gallery" element={<Gallery />} />
         <Route path="blocks" element={<Blocks />} />
         <Route path="editor/:id?" element={<Editor/>}/>
+        <Route path="learn/:id?" element={<Tutorial/>}/>
         <Route path="profile" element={<Profile/>}/>
         <Route path="profile/:userId" element={<Profile/>}/>
       </Route>
       <Route element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
         <Route path="overview" element={<Overview/>} />
         <Route path="users" element={<Users/>} />
+        <Route path="users/:userId" element={<UserDetail/>} />
         <Route path="projects-manage" element={<ProjectsManage/>} />
         <Route path="tutorials-manage" element={<TutorialsManage/>} />
         <Route path="badges-manage" element={<BadgesManage/>} />

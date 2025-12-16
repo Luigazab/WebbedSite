@@ -250,7 +250,7 @@ const Blocks = () => {
     <div className="flex flex-col w-full h-full">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div className="w-full pt-14 text-center">
+        <div className="w-full pt-12 text-center">
           <h1 className="font-bold text-4xl text-slate-900">Blocks</h1>
           <p className="text-gray-600 mt-1 text-xl font-medium">Explore HTML and CSS with us!</p>
         </div>
@@ -319,7 +319,7 @@ const Blocks = () => {
               <div className="space-y-6">
                 {Object.entries(groupedBlocks).map(([category, categoryBlocks]) => (
                   <div key={category} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-3">
+                    <div className="bg-linear-to-r from-gray-800 to-gray-700 px-4 py-3">
                       <h3 className="text-lg font-bold text-white">{category}</h3>
                     </div>
                     <div className="p-4 space-y-4">

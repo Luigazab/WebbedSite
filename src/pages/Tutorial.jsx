@@ -1,10 +1,8 @@
 import * as Blockly from 'blockly/core';
 import 'blockly/blocks';
-import { defineBlocks } from '../blocks/defineBlocks';
-import { defineGenerators } from '../blocks/defineGenerators';
 import { useEffect, useRef, useState } from 'react';
 import { javascriptGenerator } from 'blockly/javascript';
-import { X, Menu, Play, Monitor, Laptop, Tablet, Smartphone, Eye, EyeOff } from 'lucide-react';
+import { X, Menu, Play, BookOpen } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useParams } from 'react-router';
 import { registerToolboxLabel } from '../blocks/ToolBoxLabel';
@@ -20,11 +18,14 @@ import DevicePreviewModal from '../modals/DevicePreviewModal';
 import DeviceSelector from '../components/DeviceSelector';
 import { buildDynamicToolbox, registerBlockWithGenerator } from '../utils/blocklyUtil';
 import { deviceSizes } from '../utils/deviceConstant';
+import TutorialPanel from '../components/TutorialPanel';
+import TutorialSelectorModal from '../modals/TutorialSelectorModal';
+import BadgeEarnedModal from '../modals/BadgeEarnedModal';
+import { validateTutorialStep } from '../utils/tutorialValidation';
 
-// Register the field so JSON and registry lookups work
 Blockly.fieldRegistry.register('field_colour', FieldColour);
 
-const Editor = () => {
+const Tutorial = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -47,7 +48,20 @@ const Editor = () => {
   const [selectedDevice, setSelectedDevice] = useState('desktop');
   const [dynamicToolbox, setDynamicToolbox] = useState(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-  // Load blocks from Supabase and build dynamic toolbox
+
+  // Tutorial System States
+  const [tutorialMode, setTutorialMode] = useState(false);
+  const [showTutorialSelector, setShowTutorialSelector] = useState(false);
+  const [tutorials, setTutorials] = useState([]);
+  const [currentTutorial, setCurrentTutorial] = useState(null);
+  const [tutorialSteps, setTutorialSteps] = useState([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isStepComplete, setIsStepComplete] = useState(false);
+  const [userProgress, setUserProgress] = useState([]);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [earnedBadge, setEarnedBadge] = useState(null);
+
+  // Load blocks from Supabase
   const loadBlocksFromSupabase = async () => {
     try {
       const { data: blocks, error } = await supabase
@@ -68,7 +82,6 @@ const Editor = () => {
       }
 
       blocks.forEach(registerBlockWithGenerator);
-
       const finalToolbox = buildDynamicToolbox(blocks);
       setDynamicToolbox(finalToolbox);
       showMessage(`Loaded ${blocks.length} blocks from database`);
@@ -76,13 +89,49 @@ const Editor = () => {
     } catch (error) {
       console.error('Error loading blocks:', error);
       showMessage('Error loading blocks', true);
-      return;
+    }
+  };
+
+  // Load tutorials from database
+  const loadTutorials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tutorials')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (!error && data) {
+        setTutorials(data);
+      }
+    } catch (error) {
+      console.error('Error loading tutorials:', error);
+    }
+  };
+
+  // Load user progress
+  const loadUserProgress = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (!error && data) {
+        setUserProgress(data);
+      }
+    } catch (error) {
+      console.error('Error loading user progress:', error);
     }
   };
 
   useEffect(() => {
     if (!isInitialized) {
       loadBlocksFromSupabase();
+      loadTutorials();
+      loadUserProgress();
       setIsInitialized(true);
     }
   }, [isInitialized]);
@@ -120,6 +169,9 @@ const Editor = () => {
 
       workspace.current.addChangeListener(() => {
         runCode();
+        if (tutorialMode) {
+          checkStepCompletion();
+        }
       });
 
       if (id) {
@@ -133,16 +185,14 @@ const Editor = () => {
         }
       };
     }
-  }, [isInitialized, id, dynamicToolbox]);
+  }, [isInitialized, id, dynamicToolbox, tutorialMode]);
 
   const toggleToolbox = () => {
     if (!workspace.current) return;
-
     const newVisibility = !toolboxVisible;
     setToolboxVisible(newVisibility);
     
     const toolbox = workspace.current.getToolbox();
-    
     if (toolbox) {
       toolbox.setVisible(newVisibility);
       if (!newVisibility) {
@@ -157,6 +207,183 @@ const Editor = () => {
     }, 100);
   };
 
+  const runCode = () => {
+    if (workspace.current) {
+      const code = javascriptGenerator.workspaceToCode(workspace.current);
+      setGeneratedCode(code);
+    }
+  };
+
+  const showMessage = (msg, isError = false) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  // Tutorial Functions
+  const startTutorial = async (tutorial) => {
+    try {
+      // Load tutorial steps
+      const { data: steps, error } = await supabase
+        .from('tutorial_steps')
+        .select('*')
+        .eq('tutorial_id', tutorial.id)
+        .order('step_order', { ascending: true });
+
+      if (error) throw error;
+
+      setCurrentTutorial(tutorial);
+      setTutorialSteps(steps);
+      setTutorialMode(true);
+      setShowTutorialSelector(false);
+
+      // Check for existing progress
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: progress } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('tutorial_id', tutorial.id)
+          .eq('user_id', user.id)
+          .single();
+
+        const startStep = progress?.is_completed ? 0 : (progress?.current_step || 0);
+        setCurrentStepIndex(startStep);
+      } else {
+        setCurrentStepIndex(0);
+      }
+
+      // Clear workspace for fresh start
+      if (workspace.current) {
+        workspace.current.clear();
+      }
+
+      setToolboxVisible(true);
+      showMessage(`Started tutorial: ${tutorial.title}`);
+    } catch (error) {
+      console.error('Error starting tutorial:', error);
+      showMessage('Error starting tutorial', true);
+    }
+  };
+
+  const checkStepCompletion = () => {
+    if (!tutorialMode || !tutorialSteps[currentStepIndex]) return;
+
+    const currentStep = tutorialSteps[currentStepIndex];
+    const workspaceJson = Blockly.serialization.workspaces.save(workspace.current);
+    
+    const isValid = validateTutorialStep(currentStep, workspaceJson, generatedCode);
+    setIsStepComplete(isValid);
+  };
+
+  const goToNextStep = async () => {
+    if (!isStepComplete) return;
+
+    const isLastStep = currentStepIndex === tutorialSteps.length - 1;
+
+    if (isLastStep) {
+      await completeTutorial();
+    } else {
+      const nextStep = currentStepIndex + 1;
+      setCurrentStepIndex(nextStep);
+      setIsStepComplete(false);
+
+      // Save progress
+      await saveProgress(nextStep, false);
+      showMessage(`Step ${nextStep + 1} of ${tutorialSteps.length}`);
+    }
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+      setIsStepComplete(false);
+    }
+  };
+
+  const saveProgress = async (step, completed) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const progressData = {
+        user_id: user.id,
+        tutorial_id: currentTutorial.id,
+        current_step: step,
+        is_completed: completed,
+        completed_at: completed ? new Date().toISOString() : null
+      };
+
+      const { data: existing } = await supabase
+        .from('user_progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('tutorial_id', currentTutorial.id)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('user_progress')
+          .update(progressData)
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('user_progress')
+          .insert([progressData]);
+      }
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  const completeTutorial = async () => {
+    try {
+      await saveProgress(tutorialSteps.length - 1, true);
+
+      // Award badge
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: badge } = await supabase
+          .from('badges')
+          .select('*')
+          .eq('tutorial_id', currentTutorial.id)
+          .single();
+
+        if (badge) {
+          await supabase
+            .from('achievements')
+            .insert([{
+              user_id: user.id,
+              badge_earned: badge.id
+            }]);
+
+          setEarnedBadge(badge);
+          setShowBadgeModal(true);
+        }
+      }
+
+      showMessage(`🎉 Congratulations! You completed "${currentTutorial.title}"!`);
+      await loadUserProgress();
+    } catch (error) {
+      console.error('Error completing tutorial:', error);
+      showMessage('Tutorial completed!');
+    }
+  };
+
+  const exitTutorial = () => {
+    setTutorialMode(false);
+    setCurrentTutorial(null);
+    setTutorialSteps([]);
+    setCurrentStepIndex(0);
+    setIsStepComplete(false);
+    showMessage('Exited tutorial mode');
+  };
+
+  const handleBadgeModalClose = () => {
+    setShowBadgeModal(false);
+    exitTutorial();
+  };
+
+  // ... (keep all other existing functions: loadProjectById, handleSave, loadProject, etc.)
   const loadProjectById = async (projectId) => {
     try {
       const { data, error } = await supabase
@@ -167,14 +394,14 @@ const Editor = () => {
 
       if (error) {
         showMessage('Project not found', true);
-        navigate('/editor');
+        navigate('/tutorial');
         return;
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (data.user_id !== user?.id) {
         showMessage('You do not have access to this project', true);
-        navigate('/editor');
+        navigate('/tutorial');
         return;
       }
 
@@ -190,18 +417,6 @@ const Editor = () => {
       console.error('Error Loading project', error);
       showMessage('Error loading project', true);
     }
-  };
-
-  const runCode = () => {
-    if (workspace.current) {
-      const code = javascriptGenerator.workspaceToCode(workspace.current);
-      setGeneratedCode(code);
-    }
-  };
-
-  const showMessage = (msg, isError = false) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(''), 3000);
   };
 
   const handleSave = async ({ title, description }) => {
@@ -231,8 +446,7 @@ const Editor = () => {
     };
     
     let result;
-
-    const  projectIdToUpdate = id || currentProjectId;
+    const projectIdToUpdate = id || currentProjectId;
 
     if (projectIdToUpdate) {
       result = await supabase
@@ -255,7 +469,7 @@ const Editor = () => {
       setProjectTitle(title);
       setProjectDescription(description);
       if (!projectIdToUpdate) {
-        navigate(`/editor/${savedProjectId}`, { replace: true });
+        navigate(`/tutorial/${savedProjectId}`, { replace: true });
       }
       setShowSaveModal(false);
       showMessage(`Project "${title}" saved successfully!`);
@@ -265,7 +479,7 @@ const Editor = () => {
 
   const loadProject = (project) => {
     if (workspace.current && project.blocks_json) {
-      navigate(`/editor/${project.id}`);
+      navigate(`/tutorial/${project.id}`);
       Blockly.serialization.workspaces.load(project.blocks_json, workspace.current);
       setProjectTitle(project.title);
       setProjectDescription(project.description || '');
@@ -275,10 +489,9 @@ const Editor = () => {
       showMessage(`Loaded "${project.title}"`);
     }
   };
-  
+
   const loadUserProjects = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) return;
 
     const { data, error } = await supabase
@@ -313,7 +526,7 @@ const Editor = () => {
         setCurrentProjectId(null);
         setProjectTitle('');
         setProjectDescription('');
-        navigate('/editor', { replace: true });
+        navigate('/tutorial', { replace: true });
         
         if (workspace.current) {
           workspace.current.clear();
@@ -334,7 +547,7 @@ const Editor = () => {
     setProjectTitle('Untitled');
     setProjectDescription('');
     setCurrentProjectId(null);
-    navigate('/editor', { replace: true });
+    navigate('/tutorial', { replace: true });
     showMessage('New project created');
   };
 
@@ -349,7 +562,6 @@ const Editor = () => {
     URL.revokeObjectURL(url);
     showMessage('HTML file downloaded!');
   };
-
 
   const importFromFile = (event) => {
     const file = event.target.files?.[0];
@@ -385,7 +597,6 @@ const Editor = () => {
     showMessage('Workspace exported!');
   };
 
-
   const toggleResponsiveView = () => {
     setResponsive(!responsive);
     if (responsive) {
@@ -403,6 +614,8 @@ const Editor = () => {
   return (
     <div className="flex flex-col w-full h-full rounded-lg p-2 overflow-hidden">
       <input ref={fileInputRef} type="file" accept=".json" onChange={importFromFile} style={{ display: 'none' }}/>
+      
+      {/* Header */}
       <div className="bg-white px-6">
         <div className="flex items-center justify-between">
           <h2 className="flex-1 font-bold text-5xl text-left translate-y-2 -translate-x-2">
@@ -414,22 +627,47 @@ const Editor = () => {
             </p>
           )}
           <div className="flex-1 flex gap-2 justify-end">
+            <button 
+              onClick={() => setShowTutorialSelector(true)} 
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-semibold text-md rounded-xs border-2 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] border-black hover:drop-shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-purple-700 transition"
+            >
+              <BookOpen size={20} />
+              Tutorials
+            </button>
             <button onClick={createNewProject} 
               className="flex items-center px-2 py-2 bg-orange-600 text-white font-semibold text-md rounded-xs border-2 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] border-black hover:drop-shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-orange-700 transition">
               New Project
             </button>
-            <ModalDropdown label={'Save'} onClick={() => setShowSaveModal(true)} action={'Save to Projects'} description={'Saves online to your account'} onClick2={exportWorkspace} action2={'Export as JSON'} description2={'Saves project to your device that you can load back for next time'} onClick3={exportToFile} action3={'Export as File'} description3={'Save locally as an HTML and CSS file'} color={'green'} />
-            <ModalDropdown label={'Load'} onClick={() => setShowLoadModal(true)} action={'Load from Projects'} description={'Retrieves saved projects from your account'} onClick2={triggerImport} action2={'Import'} description2={'Retrieve saved project locally'} color={'blue'}/>
+            <ModalDropdown label={'Save'} onClick={() => setShowSaveModal(true)} action={'Save to Projects'} description={'Saves online to your account'} onClick2={exportWorkspace} action2={'Export as JSON'} description2={'Saves project to your device'} onClick3={exportToFile} action3={'Export as File'} description3={'Save as HTML file'} color={'green'} />
+            <ModalDropdown label={'Load'} onClick={() => setShowLoadModal(true)} action={'Load from Projects'} description={'Retrieves saved projects'} onClick2={triggerImport} action2={'Import'} description2={'Load from device'} color={'blue'}/>
           </div>
         </div>
       </div>
       <Divider />
+
       {message && (
         <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg">
           {message}
         </div>
       )}
+
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden gap-3 px-1 py-1">
+        {/* Tutorial Panel (conditionally rendered) */}
+        {tutorialMode && (
+          <div className="w-full md:w-80 h-full">
+            <TutorialPanel
+              tutorial={currentTutorial}
+              currentStep={currentStepIndex}
+              steps={tutorialSteps}
+              onNextStep={goToNextStep}
+              onPreviousStep={goToPreviousStep}
+              onExitTutorial={exitTutorial}
+              isStepComplete={isStepComplete}
+            />
+          </div>
+        )}
+
+        {/* Blockly Workspace */}
         <div className="flex flex-1 md:overflow-hidden rounded-sm border-2 relative drop-shadow-[4px_4px_0_rgba(0,0,0,1)] bg-white">
           <button onClick={toggleToolbox} 
             className="absolute top-1 left-1 z-50 bg-blue-800 text-white p-2 rounded-sm hover:bg-sky-800 transition-all" 
@@ -438,6 +676,8 @@ const Editor = () => {
           </button>
           <div ref={blocklyDiv} className="blocklyDiv flex-1 z-0" />
         </div>
+
+        {/* Preview Panel */}
         <div className='w-full md:w-3/10 relative'>
           <h4 className="absolute left-2 font-extrabold z-1 text-4xl font-mono [text-shadow:2px_2px_0_white,-2px_-2px_0_white,2px_-2px_0_white,-2px_2px_0_white] px-2">
             Preview
@@ -486,6 +726,7 @@ const Editor = () => {
         </div>
       </div>
 
+      {/* Modals */}
       <DevicePreviewModal 
         isOpen={showDeviceModal}
         device={selectedDevice}
@@ -501,6 +742,7 @@ const Editor = () => {
         initialTitle={projectTitle} 
         initialDescription={projectDescription} 
       />
+
       <LoadModal 
         isOpen={showLoadModal} 
         onClose={() => setShowLoadModal(false)} 
@@ -508,8 +750,23 @@ const Editor = () => {
         onLoadProject={loadProject} 
         onDeleteProject={deleteProject} 
       />
+
+      <TutorialSelectorModal
+        isOpen={showTutorialSelector}
+        onClose={() => setShowTutorialSelector(false)}
+        tutorials={tutorials}
+        onSelectTutorial={startTutorial}
+        userProgress={userProgress}
+      />
+
+      <BadgeEarnedModal
+        isOpen={showBadgeModal}
+        onClose={handleBadgeModalClose}
+        badge={earnedBadge}
+        tutorialTitle={currentTutorial?.title}
+      />
     </div>
   );
 };
 
-export default Editor;
+export default Tutorial;

@@ -1,4 +1,3 @@
-import React from "react";
 import SideNavbar from "../components/SideNavbar";
 import { Outlet } from "react-router";
 
@@ -30,10 +29,8 @@ const AppLayout = () => {
       {/* <div className="absolute inset-0 bg-gradient-to-b from-white via-white/0 to-white dark:from-gray-950 dark:via-gray-950/0 dark:to-gray-950" /></div> */}
       <div className="absolute inset-0 bg-linear-to-b from-white via-white/0 to-slate-50" /></div>
         <div className="relative h-screen flex min-w-screen">
-          <div className="fixed left-0 top-0 h-screen w-25 z-50 bg-gray-200 border-r-4 border-gray-900 flex flex-col items-center justify-between">
             <SideNavbar/>
-          </div>
-          <div className="flex-1 ml-25 flex items-center justfy-center">
+          <div className="flex-1 md:ml-28 flex">
             <Outlet/>
           </div>
         </div>

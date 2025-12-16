@@ -3,6 +3,7 @@ import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, L
 import StatCard from "../../components/StatCard";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
+import Loader from "../../components/Loader";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#14b8a6'];
 
@@ -176,9 +177,8 @@ const Overview = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
-        <p className="ml-4 text-lg text-blue-600">Loading Dashboard...</p>
+      <div className="flex-1 flex justify-center items-center">
+      <Loader/>
       </div>
     );
   }
